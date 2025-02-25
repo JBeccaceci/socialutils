@@ -103,10 +103,7 @@ class Instagram:
         return None
 
     def publish_content(
-        self,
-        access_token: str,
-        creation_id: str,
-        user_id=None,
+        self, access_token: str, creation_id: str, user_id=None, is_draft: bool = False
     ):
         """
         Publish uploaded content to instagram feed
@@ -120,9 +117,12 @@ class Instagram:
         publish_url = f"{self.base_path}/{user_id}/media_publish"
         publish_payload = {"creation_id": creation_id, "access_token": access_token}
 
+        if is_draft:
+            publish_payload["is_draft"] = "true"
+
         try:
             publish_response = requests.post(publish_url, data=publish_payload)
             publish_data = publish_response.json()
-
+            return publish_data
         except Exception as e:
             self.notify_function(f"Exception douring content publishing: {str(e)}")
