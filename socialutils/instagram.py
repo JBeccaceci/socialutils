@@ -26,9 +26,14 @@ class Instagram:
             str: Long-lived access token
         """
 
-        client_id = os.getenv("INSTAGRAM_CLIENT_ID", client_id)
-        client_secret = os.getenv("INSTAGRAM_CLIENT_SECRET", client_secret)
+        client_id = os.getenv("INSTAGRAM_CLIENT_ID", None)
+        client_secret = os.getenv("INSTAGRAM_CLIENT_SECRET", None)
         fb_exchange_token = os.getenv("INSTAGRAM_TOKEN", fb_exchange_token)
+
+        if client_id is None or client_secret is None:
+            raise Exception(
+                "INSTAGRAM_CLIENT_ID o INSTAGRAM_CLIENT_SECRET must be defined"
+            )
 
         url = f"{self.base_path}/oauth/access_token"
         params = {
