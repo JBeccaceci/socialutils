@@ -46,7 +46,7 @@ class Instagram:
         try:
             response = requests.get(url, params=params)
             response_data = response.json()
-
+            print(f"Data {response_data}")
             if "access_token" in response_data:
                 return response_data["access_token"]
 

@@ -38,8 +38,12 @@ def get_or_generate_long_lived_access_token(generate_access_token):
     if long_lived_access_token is None:
         try:
             token = get_short_lived_access_token()
-            long_lived_access_token = generate_access_token(token)
-            save_long_lived_acces_token(long_lived_access_token)
+
+            long_lived_access_token_generated = generate_access_token(token)
+            if long_lived_access_token_generated is None:
+                raise Exception("Long-lived access token cannot be generated")
+
+            save_long_lived_acces_token(long_lived_access_token_generated)
         except Exception:
             raise
 
