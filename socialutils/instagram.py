@@ -46,14 +46,15 @@ class Instagram:
         try:
             response = requests.get(url, params=params)
             response_data = response.json()
-            print(f"Data {response_data}")
-            if "access_token" in response_data:
-                return response_data["access_token"]
+            if not "access_token" in response_data:
+                raise Exception(
+                    f"Long-lived access token couldn't be generated {response_data}"
+                )
 
+            return response_data["access_token"]
         except Exception as e:
             self.notify_function(f"Exception douring token generation: {str(e)}")
-
-        return None
+            raise
 
     def reel_upload(
         self,
