@@ -86,7 +86,7 @@ class Instagram:
         }
 
         payload = {
-            "media_type": "VIDEO",
+            "media_type": "REELS",
             "caption": caption,
             "access_token": access_token,
         }
@@ -127,3 +127,74 @@ class Instagram:
             return publish_data
         except Exception as e:
             self.notify_function(f"Exception douring content publishing: {str(e)}")
+
+    def upload_reel(
+        self,
+        access_token: str,
+        video_url: str,
+        caption: str,
+        cover_url: str = None,
+        share_to_feed: bool = False,
+        collaborators: list = None,
+        audio_name: str = None,
+        user_tags: list = None,
+        location_id: str = None,
+        thumb_offset: int = None,
+        user_id=None,
+    ):
+        """
+        Uploads a reel to Instagram using the Graph API.
+
+        Args:
+            access_token (str): Instagram user access token.
+            user_id (str): Instagram user ID.
+            video_url (str): URL of the reel video.
+            caption (str): Caption for the reel.
+            cover_url (str, optional): URL of the reel cover image.
+            share_to_feed (bool, optional): Whether to share to feed.
+            collaborators (list, optional): List of collaborator usernames.
+            audio_name (str, optional): Custom audio name.
+            user_tags (list, optional): List of user tags.
+            location_id (str, optional): Location page ID.
+            thumb_offset (int, optional): Thumbnail offset.
+
+        Returns:
+            dict: Response from the API.
+        """
+        user_id = os.getenv("INSTAGRAM_USER_ID", user_id)
+
+        url = f"{self.base_path}/{user_id}/media"
+
+        payload = {
+            "media_type": "REELS",
+            "video_url": video_url,
+            "caption": caption,
+            "share_to_feed": str(share_to_feed).lower(),
+            "access_token": access_token,
+        }
+
+        if cover_url:
+            payload["cover_url"] = cover_url
+        if collaborators:
+            payload["collaborators"] = ",".join(collaborators)
+        if audio_name:
+            payload["audio_name"] = audio_name
+        if user_tags:
+            payload["user_tags"] = ",".join(user_tags)
+        if location_id:
+            payload["location_id"] = location_id
+        if thumb_offset is not None:
+            payload["thumb_offset"] = thumb_offset
+
+        try:
+            response = requests.post(url, data=payload)
+            response_data = response.json()
+
+            if "id" not in response_data:
+                raise Exception(f"Upload failed: {response_data}")
+
+            return response_data
+
+        except Exception as e:
+            print(f"Error uploading reel: {e}")
+            return None
