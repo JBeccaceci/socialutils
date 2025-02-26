@@ -81,8 +81,8 @@ class Instagram:
 
         upload_url = f"{self.base_path}/{user_id}/media"
         files = {
-            "video": ("video.mp4", BytesIO(video_data), "video/mp4"),
-            "thumbnail": ("thumbnail.jpg", BytesIO(thumbnail_data), "image/jpeg"),
+            "video": ("video.mp4", video_data, "video/mp4"),
+            "thumbnail": ("thumbnail.jpg", thumbnail_data, "image/jpeg"),
         }
 
         payload = {
@@ -95,12 +95,13 @@ class Instagram:
             response = requests.post(upload_url, data=payload, files=files)
             response_data = response.json()
 
-            if "id" in response_data:
-                return response_data["id"]
+            if not "id" in response_data:
+                raise Exception(f"Uploaded content error {response_data}")
+
+            return response_data["id"]
         except Exception as e:
             self.notify_function(f"Exception douring content uploading: {str(e)}")
-
-        return None
+            raise
 
     def publish_content(
         self, access_token: str, creation_id: str, user_id=None, is_draft: bool = False
