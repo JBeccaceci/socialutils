@@ -1,12 +1,13 @@
 from io import BytesIO
 import os
+import time
 import requests
 
 
 class Instagram:
 
     def __init__(
-        self, base_path="https://graph.facebook.com/v19.0", notify_function=None
+        self, base_path="https://graph.facebook.com/v22.0", notify_function=None
     ):
         self.base_path = base_path
         self.notify_function = (
@@ -193,8 +194,79 @@ class Instagram:
             if "id" not in response_data:
                 raise Exception(f"Upload failed: {response_data}")
 
-            return response_data
+            media_id = response_data["id"]
+
+            if self.wait_for_media_processing(media_id, access_token):
+                return self.publish_content(access_token, media_id, user_id)
+            else:
+                raise Exception("Media processing timeout.")
 
         except Exception as e:
             print(f"Error uploading reel: {e}")
             return None
+
+    def upload_image(self, access_token: str, url):
+        """
+        Upload image using instagram API
+
+        Args:
+            access_token (str): Instagram user access token.
+            url (str): Image url
+
+        Returns:
+            str: Media id
+        """
+        user_id = os.getenv("INSTAGRAM_USER_ID", user_id)
+
+        url = f"{self.base_path}/{user_id}/media"
+
+        payload = {"image_url": url, "access_token": access_token}
+        response = requests.post(url, data=payload)
+        response_data = response.json()
+        return response_data.get("id")
+
+    def publish_carousel(self, access_token: str, media_ids, caption):
+        """
+        Publish carouse given an array of pre-load imagenes
+
+        Args:
+            access_token (str): Instagram user access token.
+            media_ids (str[]): Pre-load images
+            caption (str): Caption of the carousel
+
+        Returns:
+            str: Carousel id
+        """
+        user_id = os.getenv("INSTAGRAM_USER_ID", user_id)
+
+        url = f"{self.base_path}/{user_id}/media"
+
+        payload = {
+            "media_type": "CAROUSEL",
+            "caption": caption,
+            "children": ",".join(media_ids),
+            "access_token": access_token,
+        }
+        response = requests.post(url, data=payload)
+        response_data = response.json()
+        return response_data.get("id")
+
+    def wait_for_media_processing(
+        self, media_id: str, access_token: str, timeout=120, interval=5
+    ):
+        """
+        Espera hasta que el video esté procesado antes de publicarlo.
+        """
+        url = f"{self.base_path}/{media_id}?fields=status_code&access_token={access_token}"
+        start_time = time.time()
+
+        while time.time() - start_time < timeout:
+            response = requests.get(url)
+            data = response.json()
+
+            if data.get("status_code") == "FINISHED":
+                return True
+
+            time.sleep(interval)
+
+        return False
